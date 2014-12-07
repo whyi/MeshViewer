@@ -6,7 +6,7 @@
 #include "Log.h"
 
 CMesh::CMesh(void)
-  : m_pts(), m_tris(),
+  : vertices(), triangles(),
     xmin(LONG_MAX), ymin(LONG_MAX), zmin(LONG_MAX),
     xmax(-LONG_MAX), ymax(-LONG_MAX), zmax(-LONG_MAX),
     geoCenter()
@@ -17,14 +17,14 @@ void CMesh::computeBoundingBox(void)
 {
   geoCenter.set(0,0,0);
 
-  for( size_t i = 0; i < m_pts.size(); ++i )
+  for( size_t i = 0; i < vertices.size(); ++i )
   {
-    if( m_pts[i].x() > xmax ) xmax = m_pts[i].x();
-    if( m_pts[i].y() > ymax ) ymax = m_pts[i].y();
-    if( m_pts[i].z() > zmax ) zmax = m_pts[i].z();
-    if( m_pts[i].x() < xmin ) xmin = m_pts[i].x();
-    if( m_pts[i].y() < ymin ) ymin = m_pts[i].y();
-    if( m_pts[i].z() < zmin ) zmin = m_pts[i].z();
+    if( vertices[i].x() > xmax ) xmax = vertices[i].x();
+    if( vertices[i].y() > ymax ) ymax = vertices[i].y();
+    if( vertices[i].z() > zmax ) zmax = vertices[i].z();
+    if( vertices[i].x() < xmin ) xmin = vertices[i].x();
+    if( vertices[i].y() < ymin ) ymin = vertices[i].y();
+    if( vertices[i].z() < zmin ) zmin = vertices[i].z();
   }
   geoCenter.set((xmin+xmax)/2,
                 (ymin+ymax)/2,
@@ -39,12 +39,12 @@ void CMesh::render(void) const
   glColor3f( 1, 0, 0 );
   glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
 
-  for( size_t i = 0; i < m_tris.size()/3; ++i )
+  for( size_t i = 0; i < triangles.size()/3; ++i )
   {
     glBegin( GL_TRIANGLES );
-    glVertex3dv( m_pts[m_tris[3*i]] );
-    glVertex3dv( m_pts[m_tris[3*i+1]] );
-    glVertex3dv( m_pts[m_tris[3*i+2]] );
+    glVertex3dv( vertices[triangles[3*i]] );
+    glVertex3dv( vertices[triangles[3*i+1]] );
+    glVertex3dv( vertices[triangles[3*i+2]] );
     glEnd();
   }
 
@@ -53,7 +53,7 @@ void CMesh::render(void) const
   glPopMatrix();
 }
 
-bool CMesh::readOFF(const std::string &filename)
+void CMesh::readOFF(const std::string &filename)
 {
   std::ifstream in(filename.c_str(), std::ios::in );
   std::string buffer;
@@ -62,35 +62,36 @@ bool CMesh::readOFF(const std::string &filename)
   getline(in, buffer);
 
   std::istringstream line(buffer);
-  size_t nVertices, nTris;
-  line >> nVertices >> nTris;
+  size_t counter(0);
 
-  m_pts.reserve(nVertices);
-  size_t cnt(0);
-  while(cnt < nVertices)
+  size_t number_of_vertices, number_of_triangles;
+  line >> number_of_vertices >> number_of_triangles;
+
+  vertices.reserve(number_of_vertices);
+  while(counter < number_of_vertices)
   {
     getline(in, buffer);
-    std::istringstream pointsLine(buffer);
+    std::istringstream point(buffer);
     double x, y, z;
-    pointsLine >> x >> y >> z;
-    m_pts.push_back(CVec(x,y,z));
-    ++cnt;
+    point >> x >> y >> z;
+    vertices.push_back(CVec(x,y,z));
+    ++counter;
   }
-  cnt = 0;
-  m_tris.reserve(nTris);
-  while(cnt < nTris)
+  counter = 0;
+
+  triangles.reserve(number_of_triangles);
+  while(counter < number_of_triangles)
   {
     getline(in, buffer);
-    std::istringstream pointsLine(buffer);
-    size_t tmp, i1, i2, i3;
-    pointsLine >> tmp >> i1 >> i2 >> i3;
-    m_tris.push_back(i1);
-    m_tris.push_back(i2);
-    m_tris.push_back(i3);
-    ++cnt;
+    std::istringstream face(buffer);
+    size_t tmp, point_a, point_b, point_c;
+    face >> tmp >> point_a >> point_b >> point_c;
+    triangles.push_back(point_a);
+    triangles.push_back(point_b);
+    triangles.push_back(point_c);
+    ++counter;
   }
   in.close();
-  return true;
 }
 
 
@@ -98,12 +99,12 @@ const bool CMesh::containsPoint( const CVec &p ) const
 {
   size_t nHit(0);
 
-  for(size_t i = 0; i < m_tris.size()/3; ++i)
+  for(size_t i = 0; i < triangles.size()/3; ++i)
   {
     if( CVec::rayHitTri(p, geoCenter,
-                  m_pts[m_tris[3*i]],
-                  m_pts[m_tris[3*i+2]],
-                  m_pts[m_tris[3*i+1]]) )
+                  vertices[triangles[3*i]],
+                  vertices[triangles[3*i+2]],
+                  vertices[triangles[3*i+1]]) )
       ++nHit;
   }
 

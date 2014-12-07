@@ -8,8 +8,8 @@
 class CMesh
 {
 public:
-  std::vector<CVec> m_pts;
-  std::vector<size_t> m_tris;
+  std::vector<CVec> vertices;
+  std::vector<size_t> triangles;
   double xmin, ymin, zmin, xmax, ymax, zmax;
   CVec geoCenter;
   CMesh(void);
@@ -20,7 +20,7 @@ public:
   const double height(void) const { return ymax-ymin; } // height of the bounding box
   const double diag(void) const   { return sqrt(width()*width()+height()*height());}
 
-  bool readOFF(const std::string &filename);
+  void readOFF(const std::string &filename);
   void computeBoundingBox(void);
 };
 

@@ -55,9 +55,8 @@ GLWidget::GLWidget(QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
       mesh()
 {
-    if (mesh.readOFF("fandisk.off")) {
-        mesh.computeBoundingBox();
-    }
+    mesh.readOFF("fandisk.off");
+    mesh.computeBoundingBox();
 }
 
 GLWidget::~GLWidget()
